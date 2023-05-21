@@ -27,31 +27,12 @@ def angle(joint0, jointi, jointj):
     return theta
 
 
-def left_or_right(img):
+def all_in_one(img):
     img = cv2.flip(img, 1)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     height, width, _ = img.shape
     results = hands.process(img)
     handness_str = ""
-    if results.multi_hand_landmarks:
-        for h_idx, hand in enumerate(results.multi_hand_landmarks):
-            draw.draw_landmarks(img, hand, mp_hands.HAND_CONNECTIONS)
-            # get 21 key points of hand
-            hand_info = results.multi_hand_landmarks[h_idx]
-            # log left and right hands info
-            temp_handness = results.multi_handedness[h_idx].classification[0].label
-            handness_str += temp_handness
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    img = cv2.putText(
-        img, handness_str, (25, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.6, (255, 0, 0), 2
-    )
-    return handness_str, img
-
-
-def finger_count(img):
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    height, width, _ = img.shape
-    results = hands.process(img)
     finger_count = 0
     if results.multi_hand_landmarks:
         for h_idx, hand in enumerate(results.multi_hand_landmarks):
@@ -60,7 +41,7 @@ def finger_count(img):
             hand_info = results.multi_hand_landmarks[h_idx]
             # log left and right hands info
             temp_handness = results.multi_handedness[h_idx].classification[0].label
-
+            handness_str += temp_handness
             tip_indexes = [(5, 8), (9, 12), (13, 16), (17, 20)]
             for tipi, tipj in tip_indexes:
                 # 判断该手指是否伸直
@@ -81,16 +62,11 @@ def finger_count(img):
                     )
                 if theta > math.pi / 180 * 150:
                     finger_count += 1
-            tipi = 2
-            tipj = 4
-            joint0 = hand_info.landmark[0]
-            jointi = hand_info.landmark[tipi]
-            jointj = hand_info.landmark[tipj]
-
-            theta = angle(jointi, joint0, jointj)
-            if theta > math.pi / 180 * 150:
-                finger_count += 1
     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    img = cv2.putText(
+        img, handness_str, (25,
+                            50), cv2.FONT_HERSHEY_SIMPLEX, 1.6, (255, 0, 0), 2
+    )
     img = cv2.putText(
         img,
         str(finger_count),
@@ -100,4 +76,4 @@ def finger_count(img):
         (255, 0, 255),
         2,
     )
-    return finger_count, img
+    return handness_str, finger_count, img
